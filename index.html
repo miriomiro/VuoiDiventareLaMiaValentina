@@ -7,38 +7,42 @@
 
 <style>
   :root{
-    --gap: 40px;
+    --gap: 34px;
+    --safeTop: env(safe-area-inset-top, 0px);
+    --safeRight: env(safe-area-inset-right, 0px);
+    --safeBottom: env(safe-area-inset-bottom, 0px);
+    --safeLeft: env(safe-area-inset-left, 0px);
   }
 
   body{
     margin:0;
-    min-height:100svh; /* meglio di 100vh su mobile */
+    min-height:100svh;
     display:flex;
     justify-content:center;
     align-items:center;
     flex-direction:column;
     font-family: Arial, sans-serif;
     overflow:hidden;
-    padding: 24px 16px;
-    text-align: center;
+    padding: calc(18px + var(--safeTop)) calc(14px + var(--safeRight)) calc(18px + var(--safeBottom)) calc(14px + var(--safeLeft));
+    text-align:center;
     background: radial-gradient(circle at 20% 10%, rgba(255,255,255,0.35), transparent 35%),
                 radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25), transparent 40%),
                 linear-gradient(135deg, #ff5aa5, #ff8cc7);
   }
 
   h1{
-    margin: 0 0 16px;
-    font-size: clamp(22px, 4.5vw, 40px);
+    margin: 0 0 14px;
+    font-size: clamp(20px, 4.2vw, 40px);
     line-height: 1.15;
     color: #1f1f1f;
     text-shadow: 0 2px 10px rgba(255,255,255,0.35);
   }
 
   img{
-    width: min(400px, 90vw);
+    width: min(420px, 88vw);
     height: auto;
     border-radius:15px;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
     box-shadow:0 5px 15px rgba(0,0,0,0.3);
   }
 
@@ -48,7 +52,7 @@
     position:relative;
     align-items:center;
     justify-content:center;
-    flex-wrap: wrap; /* se manca spazio, va a capo */
+    flex-wrap: wrap;
   }
 
   button{
@@ -58,16 +62,17 @@
     border:none;
     border-radius:12px;
     transition: transform 0.2s;
-    position: relative; /* per z-index */
+    position: relative;
     min-width: 120px;
-    min-height: 48px; /* touch target */
+    min-height: 48px;
     box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    touch-action: manipulation;
   }
 
   #btn1{ z-index: 10; }
   #btn2{ z-index: 5; }
 
-  /* Overlay cuori */
+  /* Overlay */
   #overlay{
     position:fixed;
     inset:0;
@@ -77,7 +82,7 @@
     flex-direction:column;
     z-index:999;
     overflow:hidden;
-    padding: 18px 14px;
+    padding: calc(18px + var(--safeTop)) calc(14px + var(--safeRight)) calc(18px + var(--safeBottom)) calc(14px + var(--safeLeft));
     background: radial-gradient(circle at 20% 10%, rgba(255,255,255,0.35), transparent 35%),
                 radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25), transparent 40%),
                 linear-gradient(135deg, #ff5aa5, #ff8cc7);
@@ -86,19 +91,21 @@
   #overlay img{
     width: min(560px, 92vw);
     height: auto;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.3);
   }
 
   #overlayText{
     color:white;
-    font-size: clamp(32px, 7vw, 60px);
+    font-size: clamp(28px, 7vw, 60px);
     font-weight:bold;
     text-shadow: 2px 2px 10px rgba(0,0,0,0.6);
     z-index:2;
     text-align:center;
   }
 
-  /* Cuori che cadono */
+  /* Cuori */
   .heart{
     position:absolute;
     top:-60px;
@@ -119,9 +126,20 @@
     }
   }
 
-  /* Piccoli schermi: bottoni più vicini e spesso in colonna */
+  /* 📱 Telefono: tutto più piccolo e spesso in colonna */
   @media (max-width: 420px){
-    :root{ --gap: 14px; }
+    :root{ --gap: 12px; }
+
+    h1{
+      font-size: clamp(18px, 5.2vw, 26px);
+      margin-bottom: 10px;
+    }
+
+    img{
+      width: min(280px, 86vw);
+      margin-bottom: 12px;
+      border-radius: 14px;
+    }
 
     .buttons{
       flex-direction: column;
@@ -129,7 +147,19 @@
     }
 
     button{
-      width: min(320px, 92vw);
+      width: min(260px, 84vw);
+      padding: 12px 18px;
+      font-size: 16px;
+      min-height: 44px;
+      border-radius: 12px;
+    }
+
+    #overlay img{
+      width: min(320px, 88vw);
+    }
+
+    #overlayText{
+      font-size: clamp(26px, 8vw, 42px);
     }
   }
 </style>
@@ -145,7 +175,6 @@
     <button id="btn2">No</button>
   </div>
 
-  <!-- Overlay -->
   <div id="overlay" aria-hidden="true">
     <img src="immagini/spiaggia.jpeg" alt="Spiaggia">
     <div id="overlayText">Ti amo ❤️</div>
@@ -159,8 +188,20 @@
   let scale = 1;
   let isFree = false;
 
+  function getViewportBox(){
+    // Usa la Visual Viewport quando c'è (mobile, barra browser dinamica)
+    if (window.visualViewport) {
+      return {
+        left: window.visualViewport.offsetLeft || 0,
+        top: window.visualViewport.offsetTop || 0,
+        width: window.visualViewport.width,
+        height: window.visualViewport.height
+      };
+    }
+    return { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+  }
+
   function escapeNoButton(){
-    // Alla prima fuga: diventa assoluto e “libero” nella pagina
     if (!isFree) {
       const rect = btn2.getBoundingClientRect();
       btn2.style.position = "absolute";
@@ -169,29 +210,42 @@
       document.body.appendChild(btn2);
       isFree = true;
     }
-
-    moveButton();
+    moveButtonSafely();
     growButton();
   }
 
-  // Desktop: quando ci passi sopra col mouse
+  // Desktop: avvicini il mouse
   btn2.addEventListener("pointerenter", escapeNoButton);
 
-  // Mobile: quando lo tocchi (o lo stai per toccare)
+  // Mobile: tocchi
   btn2.addEventListener("touchstart", (e) => {
-    e.preventDefault(); // evita click “fantasma”
+    e.preventDefault();
     escapeNoButton();
   }, { passive: false });
 
-  function moveButton() {
-    const maxWidth = window.innerWidth - btn2.offsetWidth;
-    const maxHeight = window.innerHeight - btn2.offsetHeight;
+  function moveButtonSafely() {
+    const box = getViewportBox();
 
-    const randomX = Math.random() * maxWidth;
-    const randomY = Math.random() * maxHeight;
+    // Margine extra per non finire sotto la UI del browser / bordi
+    const margin = 16;
 
-    btn2.style.left = randomX + "px";
-    btn2.style.top = randomY + "px";
+    // Safe area (notch / home indicator)
+    const cs = getComputedStyle(document.documentElement);
+    const safeTop = parseFloat(cs.getPropertyValue("--safeTop")) || 0;
+    const safeRight = parseFloat(cs.getPropertyValue("--safeRight")) || 0;
+    const safeBottom = parseFloat(cs.getPropertyValue("--safeBottom")) || 0;
+    const safeLeft = parseFloat(cs.getPropertyValue("--safeLeft")) || 0;
+
+    const minX = box.left + safeLeft + margin;
+    const minY = box.top + safeTop + margin;
+    const maxX = box.left + box.width - btn2.offsetWidth - safeRight - margin;
+    const maxY = box.top + box.height - btn2.offsetHeight - safeBottom - margin;
+
+    const x = minX + Math.random() * Math.max(0, (maxX - minX));
+    const y = minY + Math.random() * Math.max(0, (maxY - minY));
+
+    btn2.style.left = x + "px";
+    btn2.style.top = y + "px";
   }
 
   function growButton() {
@@ -220,17 +274,27 @@
     const hearts = ["✨","❤️","💖","💘","💝","💗","💓","💕","💞","✨"];
     heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
 
-    const x = Math.random() * 100; // vw
-    const size = 16 + Math.random() * 28; // px
-    const duration = 3 + Math.random() * 4; // s
+    const box = getViewportBox();
+    const size = 16 + Math.random() * 28;
+    const duration = 3 + Math.random() * 4;
 
-    heart.style.left = x + "vw";
+    // distribuzione su larghezza visual viewport
+    const x = (box.left + Math.random() * box.width);
+
+    heart.style.left = x + "px";
     heart.style.fontSize = size + "px";
     heart.style.animationDuration = duration + "s";
 
     overlay.appendChild(heart);
     heart.addEventListener("animationend", () => heart.remove());
   }
+
+  // Se la barra del browser cambia (scroll/rotazione), riposiziona "No" dentro il viewport
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", () => { if (isFree) moveButtonSafely(); });
+    window.visualViewport.addEventListener("scroll", () => { if (isFree) moveButtonSafely(); });
+  }
+  window.addEventListener("resize", () => { if (isFree) moveButtonSafely(); });
 </script>
 
 </body>
